@@ -1,82 +1,72 @@
 <?php
-$pageTitle = "Course Pal - Courses";
-$activePage = "courses";
-require "includes/db.php";
-require "includes/data.php";
-require "includes/course_helpers.php";
+require 'includes/connectdb.php';
+$pageTitle = 'Course Pal - All Courses';
+$activePage = 'courses';
 
-$courses = $demoCourses;
-$search = trim($_GET["search"] ?? "");
+$search = trim($_GET['search'] ?? '');
 $allowedColumns = [
-    "date" => "courses.date",
-    "course_id" => "courses.course_id",
-    "name" => "courses.name",
-    "description" => "courses.description",
-    "category_name" => "categories.category_name"
+    'course_id' => 'courses.course_id',
+    'category_name' => 'categories.category_name',
+    'name' => 'courses.name',
+    'description' => 'courses.description',
+    'date' => 'courses.date',
 ];
-$order = $_GET["order"] ?? "date";
-$sortOrder = $allowedColumns[$order] ?? "courses.date";
+$order = $_GET['order'] ?? 'date';
+$sortOrder = $allowedColumns[$order] ?? 'courses.date';
+$courses = [];
 
 if ($pdo) {
-    $sql = "
-        SELECT courses.*, categories.category_name, COUNT(bookings.booking_id) AS num_bookings
-        FROM courses
-        INNER JOIN categories ON courses.category_id = categories.category_id
-        LEFT JOIN bookings ON courses.course_id = bookings.course_id
-    ";
+    $sql = 'SELECT courses.*, categories.category_name,
+                   (SELECT COUNT(bookings.booking_id) FROM bookings WHERE bookings.course_id = courses.course_id) AS total_bookings
+            FROM courses
+            INNER JOIN categories ON courses.category_id = categories.category_id';
     $params = [];
 
-    if ($search !== "") {
-        $sql .= " WHERE categories.category_name LIKE ? OR courses.name LIKE ? OR courses.description LIKE ?";
-        $params = ["%$search%", "%$search%", "%$search%"];
+    if ($search !== '') {
+        $sql .= ' WHERE categories.category_name LIKE ? OR courses.name LIKE ? OR courses.description LIKE ?';
+        $params = ["%{$search}%", "%{$search}%", "%{$search}%"];
     }
 
-    $sql .= " GROUP BY courses.course_id ORDER BY $sortOrder";
+    $sql .= " ORDER BY {$sortOrder}";
     $statement = $pdo->prepare($sql);
     $statement->execute($params);
-    $courses = $statement->fetchAll(PDO::FETCH_ASSOC);
+    $courses = $statement->fetchAll();
 }
 
 function sort_link(string $label, string $order, string $search): string
 {
-    $query = http_build_query(array_filter(["order" => $order, "search" => $search]));
-    return "<a href=\"courses.php?$query\">$label</a>";
+    $query = http_build_query(array_filter(['order' => $order, 'search' => $search], fn($value) => $value !== ''));
+    return '<a href="courses.php?' . e($query) . '">' . e($label) . '</a>';
 }
 
-include "includes/header.php";
+require 'includes/header.php';
 ?>
 <section>
-  <div class="section-heading">
-    <div>
-      <h1>Courses List</h1>
-      <p>Search the Course Pal catalogue and choose a course to view more details.</p>
-    </div>
-    <a class="btn" href="register.php">Register</a>
-  </div>
+  <h1>Courses List</h1>
+  <p>Browse every Course Pal course. Use the search box or select a column heading to change the order.</p>
 
-  <div class="searchbox panel">
-    <form method="get" action="courses.php">
-      <label for="search">Search:</label>
-      <input id="search" type="text" name="search" value="<?php echo htmlspecialchars($search); ?>">
-      <button class="btn" type="submit">Search</button>
-    </form>
-  </div>
+  <form class="searchbox panel" method="get" action="courses.php">
+    <label for="search">Search</label>
+    <input id="search" type="text" name="search" value="<?php echo e($search); ?>">
+    <button class="btn" type="submit">Search</button>
+  </form>
 
   <table class="course-table">
+    <caption>Number of courses found: <?php echo e(count($courses)); ?></caption>
     <tr>
-      <th><?php echo sort_link("ID", "course_id", $search); ?></th>
-      <th><?php echo sort_link("Category", "category_name", $search); ?></th>
-      <th><?php echo sort_link("Course Name", "name", $search); ?></th>
-      <th><?php echo sort_link("Description", "description", $search); ?></th>
-      <th><?php echo sort_link("Date", "date", $search); ?></th>
+      <th><?php echo sort_link('ID', 'course_id', $search); ?></th>
+      <th><?php echo sort_link('Category', 'category_name', $search); ?></th>
+      <th><?php echo sort_link('Course Name', 'name', $search); ?></th>
+      <th><?php echo sort_link('Description', 'description', $search); ?></th>
+      <th><?php echo sort_link('Date', 'date', $search); ?></th>
     </tr>
     <?php foreach ($courses as $course): ?>
       <tr>
-        <td><?php echo htmlspecialchars($course["course_id"]); ?></td>
-        <td><?php echo htmlspecialchars($course["category_name"]); ?></td>
-        <td><?php echo htmlspecialchars($course["name"]); ?></td>
-        <td><?php echo htmlspecialchars($course["description"]); ?></td>
-        <td><?php echo htmlspecialchars(format_course_date($course["date"])); ?></td>
+        <td><a href="course.php?id=<?php echo e($course['course_id']); ?>"><?php echo e($course['course_id']); ?></a></td>
+        <td><?php echo e($course['category_name']); ?></td>
+        <td><?php echo e($course['name']); ?></td>
+        <td><?php echo e($course['description']); ?></td>
+        <td><?php echo e(format_course_date($course['date'])); ?></td>
       </tr>
     <?php endforeach; ?>
   </table>
@@ -84,17 +74,19 @@ include "includes/header.php";
   <div class="course-grid">
     <?php foreach ($courses as $course): ?>
       <article class="course-card">
-        <img src="uploads/<?php echo htmlspecialchars($course["course_image"]); ?>" alt="<?php echo htmlspecialchars($course["name"]); ?>">
+        <a href="course.php?id=<?php echo e($course['course_id']); ?>">
+          <img src="uploads/<?php echo e($course['course_image']); ?>" alt="<?php echo e($course['name']); ?> course image">
+        </a>
         <div class="course-card-body">
-          <p class="tag"><?php echo htmlspecialchars($course["category_name"]); ?></p>
-          <h2><?php echo htmlspecialchars($course["name"]); ?></h2>
-          <p><?php echo htmlspecialchars($course["description"]); ?></p>
-          <p class="course_date">Date: <?php echo htmlspecialchars(format_course_date($course["date"])); ?></p>
-          <p>Capacity: <?php echo htmlspecialchars($course["capacity"]); ?> | Bookings: <?php echo htmlspecialchars($course["num_bookings"] ?? 0); ?></p>
-          <a class="btn" href="course.php?id=<?php echo urlencode($course["course_id"]); ?>">View course</a>
+          <p class="tag"><?php echo e($course['category_name']); ?></p>
+          <h2><a href="course.php?id=<?php echo e($course['course_id']); ?>"><?php echo e($course['name']); ?></a></h2>
+          <p><?php echo e($course['description']); ?></p>
+          <p class="course_date">Date: <?php echo e(format_course_date($course['date'])); ?></p>
+          <p>Capacity: <?php echo e($course['capacity']); ?> | Bookings: <?php echo e($course['total_bookings']); ?></p>
+          <a class="btn" href="course.php?id=<?php echo e($course['course_id']); ?>">Read more</a>
         </div>
       </article>
     <?php endforeach; ?>
   </div>
 </section>
-<?php include "includes/footer.php"; ?>
+<?php require 'includes/footer.php'; ?>

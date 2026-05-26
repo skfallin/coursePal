@@ -1,65 +1,48 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-$pageTitle = "Course Pal - Book Course";
-$activePage = "courses";
-require "includes/db.php";
-require "includes/auth.php";
-require "includes/course_helpers.php";
-
-$courseId = (int) ($_GET["id"] ?? 0);
-$course = $pdo && $courseId ? get_course($pdo, $courseId) : null;
-$message = "";
+require 'includes/connectdb.php';
+$pageTitle = 'Course Pal - Booking';
+$activePage = 'courses';
+$courseId = (int) ($_GET['id'] ?? 0);
+$message = '';
+$course = $pdo && $courseId > 0 ? get_course($pdo, $courseId) : null;
 
 if (!is_logged_in()) {
-    $message = "You must log in or register before you can book a course.";
+    redirect_with_message('index.php', 'Please login or register to book this course.');
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    if (!is_logged_in()) {
-        $message = "You must log in or register before you can book a course.";
-    } elseif (!$course) {
-        $message = "Course not found.";
-    } elseif ((int) $course["num_bookings"] >= (int) $course["capacity"]) {
-        $message = "Booking unsuccessful. This course is fully booked.";
-    } elseif (is_user_booked_on_course($pdo, (int) $_SESSION["user_id"], $courseId)) {
-        $message = "Booking unsuccessful. You are already booked on this course.";
+if (!$pdo || !$course) {
+    $message = 'Booking unsuccessful. Course not found.';
+} else {
+    $userId = (int) $_SESSION['userid'];
+
+    $existingStatement = $pdo->prepare('SELECT COUNT(*) FROM bookings WHERE user_id = ? AND course_id = ?');
+    $existingStatement->execute([$userId, $courseId]);
+
+    if ((int) $existingStatement->fetchColumn() > 0) {
+        $message = 'Booking unsuccessful - you have already booked this course.';
+    } elseif ((int) $course['total_bookings'] >= (int) $course['capacity']) {
+        $message = "Booking unsuccessful - this course cannot be booked as it's full.";
     } else {
-        $statement = $pdo->prepare("INSERT INTO bookings (user_id, course_id) VALUES (?, ?)");
-        $statement->execute([$_SESSION["user_id"], $courseId]);
-        $message = "Booking successful. Your booking has been added.";
+        $insertStatement = $pdo->prepare('INSERT INTO bookings (user_id, course_id, booking_date) VALUES (?, ?, CURRENT_TIMESTAMP)');
+        $insertStatement->execute([$userId, $courseId]);
+        $message = 'Booking created successfully.';
         $course = get_course($pdo, $courseId);
     }
 }
 
-include "includes/header.php";
+require 'includes/header.php';
 ?>
 <section class="narrow">
-  <?php if ($course): ?>
-    <h1>Book on course</h1>
-    <article class="panel">
-      <h2><?php echo htmlspecialchars($course["name"]); ?></h2>
-      <p><?php echo htmlspecialchars($course["description"]); ?></p>
-      <p>Date: <?php echo htmlspecialchars(format_course_date($course["date"])); ?></p>
-      <p>Capacity: <?php echo htmlspecialchars($course["capacity"]); ?> | Current bookings: <?php echo htmlspecialchars($course["num_bookings"]); ?></p>
-      <?php if ($message): ?>
-        <p class="notice"><?php echo htmlspecialchars($message); ?></p>
-      <?php endif; ?>
-      <?php if (is_logged_in()): ?>
-        <form method="post" action="book.php?id=<?php echo urlencode($courseId); ?>">
-          <button class="btn" type="submit">Confirm booking</button>
-          <a class="btn btn_secondary" href="course.php?id=<?php echo urlencode($courseId); ?>">Back to course</a>
-        </form>
-      <?php else: ?>
-        <a class="btn" href="index.php">Login</a>
-        <a class="btn btn_secondary" href="register.php">Register</a>
-      <?php endif; ?>
-    </article>
-  <?php else: ?>
-    <h1>Course not found</h1>
-    <p>The selected course could not be found.</p>
-  <?php endif; ?>
+  <h1>Booking</h1>
+  <article class="panel">
+    <p class="notice"><?php echo e($message); ?></p>
+    <?php if ($course): ?>
+      <h2><?php echo e($course['name']); ?></h2>
+      <p>Date: <?php echo e(format_course_date($course['date'])); ?></p>
+      <p>Bookings: <?php echo e($course['total_bookings']); ?> / <?php echo e($course['capacity']); ?></p>
+    <?php endif; ?>
+    <a class="btn" href="account.php">My Account</a>
+    <?php if ($course): ?><a class="btn btn_secondary" href="course.php?id=<?php echo e($courseId); ?>">Back to course</a><?php endif; ?>
+  </article>
 </section>
-<?php include "includes/footer.php"; ?>
+<?php require 'includes/footer.php'; ?>

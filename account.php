@@ -1,74 +1,69 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-$pageTitle = "Course Pal - My Account";
-$activePage = "account";
-require "includes/db.php";
-require "includes/auth.php";
-require "includes/course_helpers.php";
-
+require 'includes/connectdb.php';
 require_login();
-
-$message = $_GET["message"] ?? "";
-$user = ["username" => "", "first_name" => "", "last_name" => "", "email" => ""];
+$pageTitle = 'Course Pal - My Account';
+$activePage = 'account';
+$message = trim($_GET['msg'] ?? '');
+$user = null;
 $bookings = [];
 
 if ($pdo) {
-    $userStatement = $pdo->prepare("SELECT username, first_name, last_name, email FROM users WHERE user_id = ?");
-    $userStatement->execute([$_SESSION["user_id"]]);
-    $user = $userStatement->fetch(PDO::FETCH_ASSOC) ?: $user;
+    $userStatement = $pdo->prepare('SELECT user_id, first_name, last_name, username, email FROM users WHERE user_id = ?');
+    $userStatement->execute([$_SESSION['userid']]);
+    $user = $userStatement->fetch();
 
-    $statement = $pdo->prepare("
-        SELECT bookings.booking_id, courses.course_id, courses.name, courses.date, bookings.booking_date
-        FROM bookings
-        INNER JOIN courses ON courses.course_id = bookings.course_id
-        WHERE bookings.user_id = ?
-        ORDER BY courses.date DESC
-    ");
-    $statement->execute([$_SESSION["user_id"]]);
-    $bookings = $statement->fetchAll(PDO::FETCH_ASSOC);
+    $bookingStatement = $pdo->prepare(
+        'SELECT bookings.booking_id, bookings.booking_date, courses.course_id, courses.name, courses.date
+         FROM bookings
+         INNER JOIN courses ON courses.course_id = bookings.course_id
+         WHERE bookings.user_id = ?
+         ORDER BY courses.date ASC'
+    );
+    $bookingStatement->execute([$_SESSION['userid']]);
+    $bookings = $bookingStatement->fetchAll();
 }
 
-include "includes/header.php";
+require 'includes/header.php';
 ?>
 <section>
   <h1>My Account</h1>
-  <p>View your details and the courses you have booked.</p>
-
-  <?php if ($message === "booking_cancelled"): ?>
-    <p class="notice">Your booking has been cancelled.</p>
-  <?php endif; ?>
+  <?php if ($message): ?><p class="notice"><?php echo e($message); ?></p><?php endif; ?>
 
   <div class="layout">
     <article class="panel block">
-      <h2>Profile</h2>
-      <p><strong>Username:</strong> <?php echo htmlspecialchars($user["username"]); ?></p>
-      <p><strong>Name:</strong> <?php echo htmlspecialchars($user["first_name"] . " " . $user["last_name"]); ?></p>
-      <p><strong>Email:</strong> <?php echo htmlspecialchars($user["email"]); ?></p>
-      <a class="btn" href="update_account.php">Edit account details</a>
+      <h2>Account details</h2>
+      <?php if ($user): ?>
+        <p><strong>User ID:</strong> <?php echo e($user['user_id']); ?></p>
+        <p><strong>Name:</strong> <?php echo e($user['first_name'] . ' ' . $user['last_name']); ?></p>
+        <p><strong>Username:</strong> <?php echo e($user['username']); ?></p>
+        <p><strong>Email:</strong> <?php echo e($user['email']); ?></p>
+      <?php endif; ?>
+      <a class="btn" href="edit-account.php">Edit account details</a>
     </article>
 
     <article class="panel block">
-      <h2>My Courses</h2>
+      <h2>Booked courses</h2>
+      <p>You are currently booked on <?php echo e(count($bookings)); ?> courses.</p>
       <table>
         <tr>
-          <th>Course</th>
+          <th>Name</th>
           <th>Course date</th>
           <th>Booking date</th>
-          <th>Action</th>
+          <th>Actions</th>
         </tr>
         <?php foreach ($bookings as $booking): ?>
           <tr>
-            <td><a href="course.php?id=<?php echo urlencode($booking["course_id"]); ?>"><?php echo htmlspecialchars($booking["name"]); ?></a></td>
-            <td><?php echo htmlspecialchars(format_course_date($booking["date"])); ?></td>
-            <td><?php echo htmlspecialchars(format_course_date($booking["booking_date"])); ?></td>
-            <td><a class="btn btn_cancel" href="cancel_booking.php?id=<?php echo urlencode($booking["booking_id"]); ?>">Cancel</a></td>
+            <td><?php echo e($booking['name']); ?></td>
+            <td><?php echo e(format_course_date($booking['date'])); ?></td>
+            <td><?php echo e(format_course_date($booking['booking_date'])); ?></td>
+            <td>
+              <a class="btn" href="course.php?id=<?php echo e($booking['course_id']); ?>">Learn more</a>
+              <a class="btn btn_cancel" href="cancel-booking-action.php?id=<?php echo e($booking['course_id']); ?>">Cancel booking</a>
+            </td>
           </tr>
         <?php endforeach; ?>
       </table>
     </article>
   </div>
 </section>
-<?php include "includes/footer.php"; ?>
+<?php require 'includes/footer.php'; ?>
