@@ -1,0 +1,14 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="300" height="300">
+	<title>course image</title>
+	<defs>
+		<image  width="200" height="200" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQMAAACXljzdAAAAAXNSR0IB2cksfwAAAANQTFRFADtM5KLfWQAAACdJREFUeJztyaEBAAAMAqD5/9PLBj+ASm6JMcYYY4wxxhhjjDHGlAcOMADJ5po/MQAAAABJRU5ErkJggg=="/>
+	</defs>
+	<style>
+		.s0 { opacity: .3;fill: #ffffff } 
+	</style>
+	<use id="Background" href="#img1" x="0" y="0"/>
+	<path id="Shape 1" fill-rule="evenodd" class="s0" d="m67 28h27c23.2 0 42 18.8 42 42v27c0 23.2-18.8 42-42 42h-27c-23.2 0-42-18.8-42-42v-27c0-23.2 18.8-42 42-42z"/>
+	<path id="Shape 1 copy" fill-rule="evenodd" class="s0" d="m101 67h27c23.2 0 42 18.8 42 42v27c0 23.2-18.8 42-42 42h-27c-23.2 0-42-18.8-42-42v-27c0-23.2 18.8-42 42-42z"/>
+	<path id="Shape 1 copy 2" fill-rule="evenodd" class="s0" d="m101 28h27c23.2 0 42 18.8 42 42v27c0 23.2-18.8 42-42 42h-27c-23.2 0-42-18.8-42-42v-27c0-23.2 18.8-42 42-42z"/>
+	<path id="Shape 1 copy 3" fill-rule="evenodd" class="s0" d="m67 67h27c23.2 0 42 18.8 42 42v27c0 23.2-18.8 42-42 42h-27c-23.2 0-42-18.8-42-42v-27c0-23.2 18.8-42 42-42z"/>
+</svg>

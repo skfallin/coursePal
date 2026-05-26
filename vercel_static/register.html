@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Pal - Register</title>
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <header>
+      <div class="header-left">
+        <a href="index.html" class="logolink">
+          <img src="images/logo.svg" width="100" alt="Course Pal Logo">
+          <span class="sitename">Course Pal</span>
+        </a>
+      </div>
+      <div class="header-right">
+        <p class="welcome">Welcome Guest</p>
+        <nav>
+          <ul>
+            <li><a class="" href="courses.html">All Courses</a></li>
+                          <li><a class="" href="index.html">Login</a></li>
+              <li><a class="active" href="register.html">Register</a></li>
+                                  </ul>
+        </nav>
+      </div>
+    </header>
+    <main class="container">
+<section class="narrow">
+  <h1>Register</h1>
+  <p>Create an account and choose the course categories that interest you.</p>
+
+  
+  <form class="panel" method="get" action="#" data-demo-action="register">
+    <label for="first_name">First name</label>
+    <input id="first_name" name="first_name" type="text" required>
+
+    <label for="last_name">Last name</label>
+    <input id="last_name" name="last_name" type="text" required>
+
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" required>
+
+    <label for="email">Email address</label>
+    <input id="email" name="email" type="email" required>
+
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" minlength="8" required>
+
+    <label for="password_verify">Password verification</label>
+    <input id="password_verify" name="password_verify" type="password" minlength="8" required>
+
+    <fieldset class="categories">
+      <legend>Course categories</legend>
+              <label>
+          <input type="checkbox" name="categories[]" value="4">
+          Cloud Computing        </label>
+              <label>
+          <input type="checkbox" name="categories[]" value="3">
+          Cybersecurity        </label>
+              <label>
+          <input type="checkbox" name="categories[]" value="5">
+          Data Science        </label>
+              <label>
+          <input type="checkbox" name="categories[]" value="6">
+          Graphic Design        </label>
+              <label>
+          <input type="checkbox" name="categories[]" value="7">
+          Mobile Development        </label>
+              <label>
+          <input type="checkbox" name="categories[]" value="8">
+          Networking        </label>
+              <label>
+          <input type="checkbox" name="categories[]" value="1">
+          Programming        </label>
+              <label>
+          <input type="checkbox" name="categories[]" value="2">
+          Web Development        </label>
+          </fieldset>
+
+    <button class="btn" type="submit">Register</button>
+  </form>
+</section>
+    </main>
+    <footer>
+      <div class="left">&copy; 2026 Course Pal</div>
+      <div class="right">support@coursepal.example</div>
+    </footer>
+    <script src="js/demo.js"></script>
+  </body>
+</html>
